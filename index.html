@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Management System</title>
+    <meta name="description" content="Manage books, members, and transactions with automated fine calculation.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div id="toast" class="toast"></div>
+
+    <!-- Login -->
+    <div id="login-screen" class="login-screen">
+        <div class="login-card">
+            <div class="login-icon">📚</div>
+            <h1>Library Manager</h1>
+            <p class="login-sub">Sign in to continue</p>
+            <form id="login-form">
+                <label>Email
+                    <input type="email" id="login-email" placeholder="admin@email.com" required>
+                </label>
+                <label>Password
+                    <input type="password" id="login-pass" placeholder="••••••••" required>
+                </label>
+                <button type="submit" class="btn btn-primary full-w">Sign In</button>
+                <p id="login-error" class="login-error"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- App -->
+    <div id="app" class="app hidden">
+        <header>
+            <div class="header-inner">
+                <div>
+                    <h1>📚 Library Manager</h1>
+                    <p class="subtitle">Books · Members · Transactions</p>
+                </div>
+                <button class="btn btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </header>
+
+        <div class="stats-bar">
+            <div class="stat-card">
+                <span class="stat-num" id="stat-books">0</span>
+                <span class="stat-label">Total Books</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-num" id="stat-members">0</span>
+                <span class="stat-label">Members</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-num" id="stat-issued">0</span>
+                <span class="stat-label">Issued</span>
+            </div>
+            <div class="stat-card stat-card-warn">
+                <span class="stat-num" id="stat-overdue">0</span>
+                <span class="stat-label">Overdue</span>
+            </div>
+        </div>
+
+        <nav class="tabs">
+            <button class="tab active" data-tab="books">Books</button>
+            <button class="tab" data-tab="members">Members</button>
+            <button class="tab" data-tab="transactions">Transactions</button>
+        </nav>
+
+        <main>
+            <section id="books" class="tab-content active">
+                <div class="toolbar">
+                    <div class="search-box">
+                        <input type="text" id="book-search" placeholder="Search by title or author...">
+                    </div>
+                    <button class="btn btn-primary" onclick="openModal('add-book-modal')">+ Add Book</button>
+                </div>
+                <div class="table-wrap">
+                    <table id="books-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Author</th>
+                                <th>Qty</th>
+                                <th>Available</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <p class="empty-msg" id="books-empty" style="display:none;">No books found.</p>
+                </div>
+            </section>
+
+            <section id="members" class="tab-content">
+                <div class="toolbar">
+                    <div class="search-box">
+                        <input type="text" id="member-search" placeholder="Search by name or email...">
+                    </div>
+                    <button class="btn btn-primary" onclick="openModal('add-member-modal')">+ Add Member</button>
+                </div>
+                <div class="table-wrap">
+                    <table id="members-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <p class="empty-msg" id="members-empty" style="display:none;">No members found.</p>
+                </div>
+            </section>
+
+            <section id="transactions" class="tab-content">
+                <div class="toolbar">
+                    <div class="txn-actions">
+                        <button class="btn btn-primary" onclick="openModal('issue-modal')">Issue Book</button>
+                        <button class="btn btn-accent" onclick="openModal('return-modal')">Return Book</button>
+                    </div>
+                </div>
+                <div class="table-wrap">
+                    <table id="transactions-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Book</th>
+                                <th>Member</th>
+                                <th>Issued</th>
+                                <th>Due</th>
+                                <th>Days Left</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <p class="empty-msg" id="txn-empty" style="display:none;">No active issues.</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="add-book-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Add Book</h2><button class="modal-close" onclick="closeModal('add-book-modal')">&times;</button>
+            </div>
+            <form onsubmit="addBook(event)">
+                <label>Title<input type="text" id="book-title" required></label>
+                <label>Author<input type="text" id="book-author" required></label>
+                <label>Quantity<input type="number" id="book-qty" min="1" value="1" required></label>
+                <button type="submit" class="btn btn-primary full-w">Add Book</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="edit-book-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Edit Book</h2><button class="modal-close" onclick="closeModal('edit-book-modal')">&times;</button>
+            </div>
+            <form onsubmit="updateBook(event)">
+                <input type="hidden" id="edit-book-id">
+                <label>Title<input type="text" id="edit-book-title" required></label>
+                <label>Author<input type="text" id="edit-book-author" required></label>
+                <label>Quantity<input type="number" id="edit-book-qty" min="0" required></label>
+                <button type="submit" class="btn btn-primary full-w">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="add-member-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Add Member</h2><button class="modal-close" onclick="closeModal('add-member-modal')">&times;</button>
+            </div>
+            <form onsubmit="addMember(event)">
+                <label>Name<input type="text" id="member-name" required></label>
+                <label>Email<input type="email" id="member-email" required></label>
+                <label>Phone<input type="tel" id="member-phone" required></label>
+                <button type="submit" class="btn btn-primary full-w">Add Member</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="issue-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Issue Book</h2><button class="modal-close" onclick="closeModal('issue-modal')">&times;</button>
+            </div>
+            <form onsubmit="issueBook(event)">
+                <label>Book<select id="issue-book-id" required></select></label>
+                <label>Member<select id="issue-member-id" required></select></label>
+                <button type="submit" class="btn btn-primary full-w">Issue</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="return-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Return Book</h2><button class="modal-close" onclick="closeModal('return-modal')">&times;</button>
+            </div>
+            <form onsubmit="returnBook(event)">
+                <label>Active Issue<select id="return-txn-id" required></select></label>
+                <div id="return-info" class="return-info"></div>
+                <button type="submit" class="btn btn-accent full-w">Return & Calculate Fine</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
